@@ -32,4 +32,25 @@ document.addEventListener('DOMContentLoaded', () => {
   links.forEach(a => {
     if (a.href === location.href) a.style.color = 'var(--accent)';
   });
+
+  // ── DROPDOWN con delay para que no se cierre al mover el mouse ──
+  const dropdown = nav.querySelector('.dropdown');
+  const menu = nav.querySelector('.dropdown-menu');
+  let closeTimer = null;
+
+  const openMenu = () => {
+    clearTimeout(closeTimer);
+    menu.classList.add('open');
+  };
+
+  const scheduleClose = () => {
+    closeTimer = setTimeout(() => {
+      menu.classList.remove('open');
+    }, 150); // 150ms de gracia para mover el mouse al menú
+  };
+
+  dropdown.addEventListener('mouseenter', openMenu);
+  dropdown.addEventListener('mouseleave', scheduleClose);
+  menu.addEventListener('mouseenter', openMenu);
+  menu.addEventListener('mouseleave', scheduleClose);
 });

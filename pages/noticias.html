@@ -8,6 +8,25 @@
   <link rel="stylesheet" href="../css/sections.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <style>
+    /* ── CANVAS FONDO ── */
+    #news-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Asegurar que el contenido quede encima del canvas */
+    .page-wrapper { position: relative; z-index: 1; }
+
+    /* Sección ligeramente translúcida para que se vea el fondo */
+    section.alt {
+      background: rgba(22, 27, 34, 0.82) !important;
+      backdrop-filter: blur(2px);
+    }
+
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 300, 'OPSZ' 20;
       font-size: 1rem;
@@ -143,6 +162,10 @@
   </style>
 </head>
 <body>
+
+  <!-- FONDO ANIMADO -->
+  <canvas id="news-bg"></canvas>
+
   <div class="page-wrapper">
     <section class="alt">
       <div class="container">
@@ -172,7 +195,7 @@
           </span>
           <span class="stat-chip">
             <span class="material-symbols-outlined">group</span>
-            Equipo Nexus — UTSC 9D
+            Equipo Nexus — UTSC 10D
           </span>
         </div>
 
@@ -491,5 +514,142 @@
 
   <script src="../js/nav.js"></script>
   <script src="../js/noticias.js"></script>
+  <script>
+  /* ── FONDO ANIMADO: red de noticias con parallax ── */
+  (() => {
+    const canvas = document.getElementById('news-bg');
+    const ctx = canvas.getContext('2d');
+
+    let W, H, nodes, scrollY = 0;
+    const NODE_COUNT = 55;
+    const ACCENT = '88,166,255';
+    const ACCENT2 = '63,185,80';
+
+    /* Tipos de nodo — íconos ASCII que se dibujan como texto */
+    const ICONS = ['◉', '◈', '▣', '◎', '⊡', '⊞', '⊟', '⊕'];
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = document.body.scrollHeight;
+    }
+
+    function createNodes() {
+      nodes = Array.from({ length: NODE_COUNT }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: Math.random() * 2.5 + 1,
+        icon: ICONS[Math.floor(Math.random() * ICONS.length)],
+        depth: Math.random() * 0.6 + 0.2, // para parallax
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 0.02 + 0.008,
+        color: Math.random() > 0.65 ? ACCENT2 : ACCENT,
+      }));
+    }
+
+    /* Señales viajando entre nodos (simulan "transmisión" de noticia) */
+    const signals = [];
+    function spawnSignal() {
+      const a = nodes[Math.floor(Math.random() * nodes.length)];
+      const b = nodes[Math.floor(Math.random() * nodes.length)];
+      if (a === b) return;
+      signals.push({ a, b, t: 0, speed: Math.random() * 0.008 + 0.004 });
+    }
+    setInterval(spawnSignal, 600);
+
+    window.addEventListener('scroll', () => { scrollY = window.scrollY; });
+    window.addEventListener('resize', () => { resize(); createNodes(); });
+
+    function draw(ts) {
+      ctx.clearRect(0, 0, W, H);
+
+      /* Parallax offset por nodo */
+      nodes.forEach(n => {
+        n.pulse += n.pulseSpeed;
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0) n.x = W;
+        if (n.x > W) n.x = 0;
+        if (n.y < 0) n.y = H;
+        if (n.y > H) n.y = 0;
+      });
+
+      const MAX_DIST = 180;
+
+      /* Líneas entre nodos cercanos */
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const py_a = a.y - scrollY * a.depth * 0.18;
+          const py_b = b.y - scrollY * b.depth * 0.18;
+          const dx = a.x - b.x, dy = py_a - py_b;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < MAX_DIST) {
+            const alpha = (1 - dist / MAX_DIST) * 0.13;
+            ctx.strokeStyle = `rgba(${a.color},${alpha})`;
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(a.x, py_a);
+            ctx.lineTo(b.x, py_b);
+            ctx.stroke();
+          }
+        }
+      }
+
+      /* Señales viajando por las líneas */
+      for (let s = signals.length - 1; s >= 0; s--) {
+        const sig = signals[s];
+        sig.t += sig.speed;
+        if (sig.t >= 1) { signals.splice(s, 1); continue; }
+        const px = sig.a.x + (sig.b.x - sig.a.x) * sig.t;
+        const py_a = sig.a.y - scrollY * sig.a.depth * 0.18;
+        const py_b = sig.b.y - scrollY * sig.b.depth * 0.18;
+        const py = py_a + (py_b - py_a) * sig.t;
+        const glow = ctx.createRadialGradient(px, py, 0, px, py, 10);
+        glow.addColorStop(0, `rgba(${sig.a.color},0.55)`);
+        glow.addColorStop(1, `rgba(${sig.a.color},0)`);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(px, py, 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      /* Nodos */
+      nodes.forEach(n => {
+        const py = n.y - scrollY * n.depth * 0.18;
+        const alpha = 0.18 + Math.sin(n.pulse) * 0.06;
+
+        /* Anillo pulsante */
+        const ring = ctx.createRadialGradient(n.x, py, 0, n.x, py, 18);
+        ring.addColorStop(0, `rgba(${n.color},${alpha * 0.4})`);
+        ring.addColorStop(1, `rgba(${n.color},0)`);
+        ctx.fillStyle = ring;
+        ctx.beginPath();
+        ctx.arc(n.x, py, 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Punto central */
+        ctx.fillStyle = `rgba(${n.color},${alpha + 0.12})`;
+        ctx.beginPath();
+        ctx.arc(n.x, py, n.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Ícono flotante (solo para nodos grandes) */
+        if (n.r > 2.8) {
+          ctx.font = '11px monospace';
+          ctx.fillStyle = `rgba(${n.color},${alpha * 0.7})`;
+          ctx.fillText(n.icon, n.x + 6, py - 4);
+        }
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    createNodes();
+    requestAnimationFrame(draw);
+  })();
+  </script>
 </body>
 </html>
