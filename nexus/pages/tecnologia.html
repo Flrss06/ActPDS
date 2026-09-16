@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus — Tecnología</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/sections.css" />
+</head>
+<body>
+  <div class="page-wrapper">
+    <section>
+      <div class="container">
+        <div class="section-label">SECCIÓN 3 — INTEGRANTE C</div>
+        <h2>Tecnología utilizada</h2>
+        <p class="section-desc">Stack moderno, abierto y orientado a la productividad del equipo.</p>
+
+        <div class="tech-grid">
+          <span class="tech-pill">HTML5</span>
+          <span class="tech-pill">CSS3</span>
+          <span class="tech-pill">JavaScript ES2024</span>
+          <span class="tech-pill">Node.js 20</span>
+          <span class="tech-pill">Express.js</span>
+          <span class="tech-pill">MySQL 8</span>
+          <span class="tech-pill">GitHub Actions</span>
+          <span class="tech-pill">Docker</span>
+        </div>
+
+        <div class="card-grid card-grid-2" style="margin-bottom:2rem;">
+          <div class="card">
+            
+            <h3>Frontend</h3>
+            <p>HTML semántico + CSS custom properties + JavaScript vanilla. Sin frameworks para mantener el bundle por debajo de 50 KB.</p>
+          </div>
+          <div class="card">
+            <h3>Backend</h3>
+            <p>API REST con Express.js, autenticación JWT y middleware de logging. Desplegado en Railway con auto-deploy desde main.</p>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="dot dot-r"></span>
+            <span class="dot dot-y"></span>
+            <span class="dot dot-g"></span>
+            <span class="code-label">api/tasks.js</span>
+          </div>
+<pre><span class="cm">// Endpoint: obtener tareas de un proyecto</span>
+<span class="kw">router</span>.<span class="fn">get</span>(<span class="str">'/projects/:id/tasks'</span>, <span class="fn">verifyToken</span>, <span class="kw">async</span> (req, res) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> tasks = <span class="kw">await</span> db.<span class="fn">query</span>(
+      <span class="str">`SELECT t.*, u.name AS assignee
+         FROM tasks t
+         LEFT JOIN users u ON t.assignee_id = u.id
+        WHERE t.project_id = ?
+        ORDER BY t.priority DESC`</span>,
+      [req.params.id]
+    );
+    res.<span class="fn">json</span>({ ok: <span class="kw">true</span>, data: tasks });
+  } <span class="kw">catch</span> (err) {
+    res.<span class="fn">status</span>(<span class="str">500</span>).<span class="fn">json</span>({ ok: <span class="kw">false</span>, msg: err.message });
+  }
+});</pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="../js/nav.js"></script>
+</body>
+</html>
