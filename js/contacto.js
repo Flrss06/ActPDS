@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-4px); }
     }
+
+    .form-grid input:focus,
+    .form-grid textarea:focus,
+    .form-grid select:focus {
+      transform: scale(1.01);
+    }
   `;
   document.head.appendChild(style);
 
