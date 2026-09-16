@@ -31,16 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-4px); }
     }
-
-    .form-grid input:focus,
-    .form-grid textarea:focus,
-    .form-grid select:focus {
-      transform: scale(1.01);
-    }
   `;
   document.head.appendChild(style);
 
-  const addHoverMotion = (selector) => {
+  const subtleHover = (selector) => {
     document.querySelectorAll(selector).forEach((element) => {
       element.addEventListener('mouseenter', () => {
         element.style.transform = 'translateY(-2px)';
@@ -52,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  addHoverMotion('.social-link');
-  addHoverMotion('.comment');
+  subtleHover('.social-link');
+  subtleHover('.comment');
 
   // ── ENVIAR MENSAJE ──
   const btnEnviar = document.getElementById('btnEnviar');
@@ -104,6 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('commentName').value = '';
     document.getElementById('commentText').value = '';
-    addHoverMotion('.comment');
+    subtleHover('.comment');
   }
 });
